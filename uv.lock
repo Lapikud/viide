@@ -694,7 +694,7 @@ wheels = [
 ]
 
 [[package]]
-name = "qr-code"
+name = "viide"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

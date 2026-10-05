@@ -1,5 +1,5 @@
 [project]
-name = "qr-code"
+name = "viide"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-qr-code = "qr_code:main"
+viide = "viide:main"
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
