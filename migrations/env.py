@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-import viide.db.models.user  # noqa: F401 migration will not see it otherwise
+import viide.db.models  # noqa: F401 migration will not see it otherwise
 from viide.config import load_settings
 from viide.db.base import Base
 
