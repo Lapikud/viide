@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     ldap_base_dn: str = "dc=lapikud,dc=ee"
 
     storage_endpoint: AnyUrl = AnyUrl.build(scheme="http", port=3900, host="localhost")
+    storage_public_url: AnyUrl | None = None
     storage_access_key: SecretStr
     storage_secret_key: SecretStr
     storage_bucket: str = "viide"
