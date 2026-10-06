@@ -20,8 +20,11 @@ def create_app() -> Flask:
     csrf.init_app(app)
     login_manager.init_app(app)
 
-    app.extensions["database"] = SqlDatabase(settings.database_url)
-    app.extensions["auth"] = AuthManager(LdapClient(settings.ldap_url, settings.ldap_base_dn))
+    database = SqlDatabase(settings.database_url)
+
+    app.extensions["database"] = database
+    app.extensions["links"] = LinkManager(SqlLinkRepository(database))
+    app.extensions["auth"] = AuthManager(FreeIpaClient(settings.freeipa_url))
     app.extensions["storage"] = S3Storage(
         settings.storage_endpoint,
         settings.storage_public_url or settings.storage_endpoint,

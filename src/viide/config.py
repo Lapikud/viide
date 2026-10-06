@@ -1,4 +1,4 @@
-from pydantic import AnyUrl, PostgresDsn, SecretStr, UrlConstraints, computed_field
+from pydantic import AnyUrl, HttpUrl, PostgresDsn, SecretStr, UrlConstraints, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     ldap_url: LdapUrl = LdapUrl("ldaps://ipa.lapikud.ee")
     ldap_base_dn: str = "dc=lapikud,dc=ee"
+    freeipa_url: HttpUrl = HttpUrl("https://ipa.lapikud.ee")
 
     storage_endpoint: AnyUrl = AnyUrl.build(scheme="http", port=3900, host="localhost")
     storage_public_url: AnyUrl | None = None
