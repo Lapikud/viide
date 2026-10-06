@@ -17,4 +17,4 @@ class Link(Base):
     connected_to: Mapped[int | None] = mapped_column(
         ForeignKey("qr_codes.id", ondelete="SET NULL"), index=True
     )
-    created_by: Mapped[str] = mapped_column(String(255))
+    created_by: Mapped[str] = mapped_column(String(255), index=True)
