@@ -10,7 +10,7 @@ from viide.app.db import Database
 
 class SqlDatabase(Database[Session]):
     def __init__(self, url: PostgresDsn) -> None:
-        self.engine = create_engine(str(url))
+        self.engine = create_engine(str(url), pool_pre_ping=True)
         self.transactions = sessionmaker(bind=self.engine, expire_on_commit=False)
 
     @contextmanager
