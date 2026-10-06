@@ -1,8 +1,7 @@
-from abc import ABC, abstractmethod
+from typing import Protocol
 
 from .user import Credentials
 
 
-class Client(ABC):
-    @abstractmethod
+class Client(Protocol):
     def verify_credentials(self, creds: Credentials) -> bool: ...
