@@ -21,7 +21,7 @@ def create_app() -> Flask:
 
     app.extensions["database"] = create_db(settings)
     app.extensions["storage"] = create_client(settings)
-    app.extensions["ldap"] = create_auth_client(settings)
+    app.extensions["auth"] = create_auth_client(settings)
 
     app.register_blueprint(routes)
 
