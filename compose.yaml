@@ -21,12 +21,27 @@ services:
       GARAGE_DEFAULT_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       GARAGE_DEFAULT_SECRET_KEY: ${STORAGE_SECRET_KEY}
       GARAGE_DEFAULT_BUCKET: ${STORAGE_BUCKET}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN}
     ports:
       - "3900:3900"
     volumes:
       - ./garage.toml:/etc/garage.toml:ro
       - garage-meta:/var/lib/garage/meta
       - garage-data:/var/lib/garage/data
+
+  garage-webui:
+    profiles:
+      - dev
+    image: khairul169/garage-webui:latest
+    ports:
+      - "3909:3909"
+    environment:
+      API_BASE_URL: http://garage:3903
+      API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN}
+      S3_ENDPOINT_URL: http://garage:3900
+      S3_REGION: us-east-1
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
 
 volumes:
   postgres-data:
