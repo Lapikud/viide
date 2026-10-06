@@ -13,10 +13,10 @@ services:
   garage:
     image: dxflrs/garage:v2.3.0
     command:
+      - /garage
       - server
       - --single-node
       - --default-bucket
-      - ${STORAGE_BUCKET}
     environment:
       GARAGE_DEFAULT_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
       GARAGE_DEFAULT_SECRET_KEY: ${STORAGE_SECRET_KEY}
@@ -24,6 +24,7 @@ services:
     ports:
       - "3900:3900"
     volumes:
+      - ./garage.toml:/etc/garage.toml:ro
       - garage-meta:/var/lib/garage/meta
       - garage-data:/var/lib/garage/data
 
