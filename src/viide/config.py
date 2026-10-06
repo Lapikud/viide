@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     storage_bucket: str = "viide"
 
     secret_key: SecretStr
+    public_url: HttpUrl = HttpUrl("http://localhost:5000")
 
     model_config = SettingsConfigDict(
         env_file=".env",
