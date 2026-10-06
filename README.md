@@ -61,6 +61,16 @@ docker compose down
 
 Compose volumes keep the local database and stored QR images between runs.
 
+## Production
+
+`uv run viide` uses Flask's development server. In production, apply the migrations and serve the app with Gunicorn:
+
+```sh
+uv sync --frozen --no-dev
+uv run --no-dev alembic upgrade head
+uv run --no-dev gunicorn --bind 0.0.0.0:8000 --workers 4 "viide.web.app:create_app()"
+```
+
 ## Configuration
 
 `src/viide/config.py` loads `.env`. The main settings are:
