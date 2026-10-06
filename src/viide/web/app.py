@@ -1,9 +1,11 @@
 from flask import Flask
 
-from viide.app.auth.clients.ldap import LdapClient
+from viide.app.aka.manager import LinkManager
+from viide.app.auth.clients.freeipa import FreeIpaClient
 from viide.app.auth.manager import AuthManager
 from viide.config import load_settings
 from viide.db.engine import SqlDatabase
+from viide.db.repositories.link import SqlLinkRepository
 from viide.storage.client import S3Storage
 
 from .extensions import csrf, login_manager

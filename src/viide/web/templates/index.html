@@ -7,6 +7,23 @@
 </head>
 <body>
   <p>Signed in as {{ current_user.id }}.</p>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      {% if category == "link" %}
+        <p>Short link: <a href="{{ message }}">{{ message }}</a></p>
+      {% else %}
+        <p role="alert" class="{{ category }}">{{ message }}</p>
+      {% endif %}
+    {% endfor %}
+  {% endwith %}
+  <form method="post" action="{{ url_for('routes.shorten') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="src">URL</label>
+    <input id="src" name="src" type="url" required>
+    <label for="dst">Short code (optional)</label>
+    <input id="dst" name="dst" pattern="[A-Za-z0-9_-]+">
+    <button type="submit">Shorten</button>
+  </form>
   <form method="post" action="{{ url_for('routes.logout') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit">Log out</button>
