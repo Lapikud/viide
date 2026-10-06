@@ -1,5 +1,9 @@
-from pydantic import AnyUrl, PostgresDsn, SecretStr, computed_field
+from pydantic import AnyUrl, PostgresDsn, SecretStr, UrlConstraints, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class LdapUrl(AnyUrl):
+    _constraints = UrlConstraints(allowed_schemes=["ldap", "ldaps"], host_required=True)
 
 
 class Settings(BaseSettings):
@@ -9,7 +13,7 @@ class Settings(BaseSettings):
     db_user: str = "viide"
     db_password: SecretStr
 
-    ldap_url: str = "ldaps://ipa.lapikud.ee"
+    ldap_url: LdapUrl = LdapUrl("ldaps://ipa.lapikud.ee")
     ldap_base_dn: str = "dc=lapikud,dc=ee"
 
     storage_endpoint: AnyUrl = AnyUrl.build(scheme="http", port=3900, host="localhost")
