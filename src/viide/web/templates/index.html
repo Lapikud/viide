@@ -6,6 +6,10 @@
   <title>Document</title>
 </head>
 <body>
-  hello
+  <p>Signed in as {{ current_user.id }}.</p>
+  <form method="post" action="{{ url_for('routes.logout') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit">Log out</button>
+  </form>
 </body>
 </html>
