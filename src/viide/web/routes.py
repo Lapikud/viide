@@ -53,20 +53,45 @@ def logout() -> Response:
     return redirect(url_for("routes.login"))
 
 
-@routes.post("/links")
+@routes.route("/links", methods=["GET", "POST"])
 @login_required
-def shorten() -> Response:
+def handle_links() -> Response | str:
+    links = current_app.extensions["links"]
+    if request.method == "GET":
+        return render_template("links.html", links=links.owned_by(current_user.id))
+
     try:
-        link = current_app.extensions["links"].shorten(
+        link = links.shorten(
             request.form.get("src", ""),
             created_by=current_user.id,
-            dst=request.form.get("dst", "").strip() or None,
+            dst=request.form.get("dst"),
+            expires_in_days=request.form.get("expires_in_days"),
         )
     except LinkError as e:
         flash(str(e), "error")
     else:
-        flash(url_for("routes.follow", dst=link.dst, _external=True), "link")
+        flash(str(links.short_url(link.dst)), "link")
     return redirect(url_for("routes.index"))
+
+
+@routes.post("/links/<dst>/qr")
+@login_required
+def create_qr(dst: str) -> Response:
+    try:
+        current_app.extensions["links"].create_qr(dst, current_user.id)
+    except LinkError as e:
+        flash(str(e), "error")
+    return redirect(url_for("routes.handle_links"))
+
+
+@routes.post("/links/<dst>/delete")
+@login_required
+def delete_link(dst: str) -> Response:
+    try:
+        current_app.extensions["links"].delete(dst, current_user.id)
+    except LinkError as e:
+        flash(str(e), "error")
+    return redirect(url_for("routes.handle_links"))
 
 
 @routes.get("/<dst>")

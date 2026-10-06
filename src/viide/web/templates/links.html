@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Links</title>
+</head>
+<body>
+<main>
+  <p><a href="{{ url_for('routes.index') }}">Shorten a link</a></p>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <p role="alert" class="{{ category }}">{{ message }}</p>
+    {% endfor %}
+  {% endwith %}
+  {% for item in links %}
+    <article>
+      <p><a href="{{ item.short_url }}">{{ item.short_url }}</a> → <a href="{{ item.link.src }}">{{ item.link.src }}</a></p>
+      <p>
+        Created {{ item.link.created_at.strftime("%Y-%m-%d %H:%M") }} UTC
+        {% if item.link.expires_at %}
+          · {{ "Expired" if item.expired else "Expires" }} {{ item.link.expires_at.strftime("%Y-%m-%d %H:%M") }} UTC
+        {% endif %}
+      </p>
+      {% if item.qr_url %}
+        <a href="{{ item.qr_url }}"><img src="{{ item.qr_url }}" alt="QR code for {{ item.short_url }}" width="160" height="160"></a>
+      {% else %}
+        <form method="post" action="{{ url_for('routes.create_qr', dst=item.link.dst) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit">Create QR code</button>
+        </form>
+      {% endif %}
+      <form method="post" action="{{ url_for('routes.delete_link', dst=item.link.dst) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Delete</button>
+      </form>
+    </article>
+  {% else %}
+    <p>No links yet.</p>
+  {% endfor %}
+</main>
+</body>
+</html>
