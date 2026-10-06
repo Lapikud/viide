@@ -13,6 +13,8 @@ from werkzeug.wrappers import Response
 
 from viide.app.auth.errors import AuthError
 
+from .extensions import LoginUser
+
 routes = Blueprint("routes", __name__)
 
 
@@ -36,7 +38,7 @@ def login() -> Response | str:
         except AuthError as e:
             flash(str(e), "error")
         else:
-            login_user(user)
+            login_user(LoginUser(user))
             return redirect(url_for("routes.index"))
 
     return render_template("login.html")

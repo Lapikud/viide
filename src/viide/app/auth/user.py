@@ -1,6 +1,5 @@
 from typing import Annotated
 
-from flask_login import UserMixin
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, StringConstraints
 
 
@@ -9,7 +8,7 @@ class Credentials(BaseModel):
     password: SecretStr = Field(min_length=1)
 
 
-class SessionUser(BaseModel, UserMixin):
+class SessionUser(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     id: str
