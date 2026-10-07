@@ -1,3 +1,5 @@
+"""The ``qr_codes`` table, which records QR images kept in object storage."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, func
@@ -7,6 +9,8 @@ from viide.db.base import Base
 
 
 class QrCode(Base):
+    """Map a QR code to the qr_codes table."""
+
     __tablename__ = "qr_codes"
 
     id: Mapped[int] = mapped_column(primary_key=True)

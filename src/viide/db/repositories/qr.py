@@ -1,3 +1,5 @@
+"""QR code repository; the images themselves live in object storage."""
+
 from sqlalchemy import delete, insert
 from sqlalchemy.orm import Session
 
@@ -7,19 +9,25 @@ from viide.db.models.qr import QrCode as QrRow
 
 
 class SqlQrRepository(QrRepository):
+    """Save and retrieve QR code records from the database."""
+
     def __init__(self, db: Database[Session]) -> None:
+        """Set the database used for transactions."""
         self.db = db
 
     def add(self, qr: NewQrCode) -> QrCode:
+        """Insert and return a QR code record."""
         with self.db.transaction() as transaction:
             row = transaction.scalar(insert(QrRow).values(**qr.model_dump()).returning(QrRow))
         return QrCode.model_validate(row)
 
     def get(self, qr_id: int) -> QrCode | None:
+        """Find a QR code record by ID."""
         with self.db.transaction() as transaction:
             row = transaction.get(QrRow, qr_id)
         return QrCode.model_validate(row) if row else None
 
     def delete(self, qr_id: int) -> None:
+        """Delete a QR code record by ID."""
         with self.db.transaction() as transaction:
             transaction.execute(delete(QrRow).filter_by(id=qr_id))

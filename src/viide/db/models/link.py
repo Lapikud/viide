@@ -1,3 +1,5 @@
+"""The ``links`` table, which holds every short link."""
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
@@ -7,6 +9,8 @@ from viide.db.base import Base
 
 
 class Link(Base):
+    """Map a short link to the links table."""
+
     __tablename__ = "links"
 
     id: Mapped[int] = mapped_column(primary_key=True)

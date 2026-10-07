@@ -1,8 +1,12 @@
+"""The declarative base for all models, with stable names for migrations."""
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
+    """Apply shared naming rules to SQLAlchemy models."""
+
     metadata = MetaData(
         naming_convention={
             "pk": "pk_%(table_name)s",

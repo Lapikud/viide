@@ -48,22 +48,24 @@ def test_rejects_invalid_expiry(manager: LinkManager, days: str):
 def test_saves_link_with_custom_code(manager: LinkManager, links: FakeLinkRepository):
     manager.shorten(URL, created_by="alice", dst="my-code")
 
-    assert links.rows["my-code"].created_by == "alice"
-    assert links.rows["my-code"].src == HttpUrl(URL)
+    assert links.rows["my-code"].created_by == "alice", "the custom link should belong to Alice"
+    assert links.rows["my-code"].src == HttpUrl(URL), "the custom link should keep its target URL"
 
 
 def test_link_without_expiry_never_expires(manager: LinkManager):
     link = manager.shorten(URL, created_by="alice", dst="code")
 
-    assert link.expires_at is None
+    assert link.expires_at is None, "a link without an expiry should have no deadline"
 
 
 def test_expiry_is_days_from_now(manager: LinkManager):
     link = manager.shorten(URL, created_by="alice", dst="code", expires_in_days="7")
 
-    assert link.expires_at is not None
+    assert link.expires_at is not None, "the link should have an expiry time"
     expected = datetime.now(UTC) + timedelta(days=7)
-    assert abs(link.expires_at - expected) < timedelta(seconds=5)
+    assert abs(link.expires_at - expected) < timedelta(seconds=5), (
+        "the expiry should be seven days from creation"
+    )
 
 
 def test_blank_code_and_expiry_are_ignored(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
@@ -71,8 +73,8 @@ def test_blank_code_and_expiry_are_ignored(manager: LinkManager, monkeypatch: py
 
     link = manager.shorten(URL, created_by="alice", dst=" ", expires_in_days="")
 
-    assert link.dst == "random"
-    assert link.expires_at is None
+    assert link.dst == "random", "a blank code should trigger code generation"
+    assert link.expires_at is None, "a blank expiry should leave the link without a deadline"
 
 
 def test_rejects_reserved_code(manager: LinkManager):
@@ -92,7 +94,7 @@ def test_generated_code_skips_reserved(manager: LinkManager, monkeypatch: pytest
 
     link = manager.shorten(URL, created_by="alice")
 
-    assert link.dst == "random"
+    assert link.dst == "random", "a reserved code should be skipped"
 
 
 def test_generated_code_retries_when_taken(
@@ -103,7 +105,7 @@ def test_generated_code_retries_when_taken(
 
     link = manager.shorten(URL, created_by="alice")
 
-    assert link.dst == "random"
+    assert link.dst == "random", "a collision should trigger another generated code"
 
 
 def test_generated_code_can_be_retried_after_collisions(
@@ -120,13 +122,13 @@ def test_generated_code_can_be_retried_after_collisions(
 
     link = manager.shorten(URL, created_by="alice")
 
-    assert link.dst == "available"
+    assert link.dst == "available", "a later request should use the available code"
 
 
 def test_resolves_active_link(manager: LinkManager, links: FakeLinkRepository):
     links.seed("code", expires_at=TOMORROW)
 
-    assert manager.resolve("code").dst == "code"
+    assert manager.resolve("code").dst == "code", "an active short code should resolve"
 
 
 def test_resolving_missing_link_fails(manager: LinkManager):
@@ -147,7 +149,9 @@ def test_lists_only_own_links(manager: LinkManager, links: FakeLinkRepository):
 
     owned = manager.owned_by("alice")
 
-    assert [item.link.dst for item in owned] == ["mine"]
+    assert [item.link.dst for item in owned] == ["mine"], (
+        "the owner should see only their own links"
+    )
 
 
 def test_listed_link_has_short_url(manager: LinkManager, links: FakeLinkRepository):
@@ -155,7 +159,9 @@ def test_listed_link_has_short_url(manager: LinkManager, links: FakeLinkReposito
 
     (item,) = manager.owned_by("alice")
 
-    assert str(item.short_url) == "https://viide.test/code"
+    assert str(item.short_url) == "https://viide.test/code", (
+        "the listing should show the public short URL"
+    )
 
 
 def test_static_link_has_no_short_url(manager: LinkManager):
@@ -163,7 +169,7 @@ def test_static_link_has_no_short_url(manager: LinkManager):
 
     (item,) = manager.owned_by("alice")
 
-    assert item.short_url is None
+    assert item.short_url is None, "a static link should not have a short URL"
 
 
 def test_listed_link_shows_expired(manager: LinkManager, links: FakeLinkRepository):
@@ -171,7 +177,7 @@ def test_listed_link_shows_expired(manager: LinkManager, links: FakeLinkReposito
 
     (item,) = manager.owned_by("alice")
 
-    assert item.expired
+    assert item.expired, "the listing should mark an expired link"
 
 
 def test_user_can_delete_own_link(manager: LinkManager, links: FakeLinkRepository):
@@ -179,7 +185,7 @@ def test_user_can_delete_own_link(manager: LinkManager, links: FakeLinkRepositor
 
     manager.delete("code", created_by="alice")
 
-    assert "code" not in links.rows
+    assert "code" not in links.rows, "the owner should be able to delete the link"
 
 
 def test_user_cannot_delete_other_users_link(manager: LinkManager, links: FakeLinkRepository):
@@ -187,4 +193,4 @@ def test_user_cannot_delete_other_users_link(manager: LinkManager, links: FakeLi
 
     with pytest.raises(LinkNotFound):
         manager.delete("code", created_by="alice")
-    assert "code" in links.rows
+    assert "code" in links.rows, "another user should not delete the link"

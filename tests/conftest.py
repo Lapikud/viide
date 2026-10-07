@@ -71,6 +71,7 @@ def make_app(
     storage: FakeStorage,
     auth_client: FakeAuthClient,
 ):
+
     def make() -> Flask:
         monkeypatch.setattr(web_app, "load_settings", fake_settings)
         app = web_app.create_app()
@@ -97,5 +98,5 @@ def client(app: Flask) -> Iterator[FlaskClient]:
 
 @pytest.fixture
 def user_client(client: FlaskClient) -> FlaskClient:
-    assert login(client).status_code == 302
+    assert login(client).status_code == 302, "test client should log in successfully"
     return client
