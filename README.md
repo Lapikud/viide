@@ -1,7 +1,7 @@
 # Viide
 
-[![Tests](https://github.com/Lapikud/viide/actions/workflows/tests.yml/badge.svg)](https://github.com/Lapikud/viide/actions/workflows/tests.yml)
-[![Coverage](https://raw.githubusercontent.com/Lapikud/viide/python-coverage-comment-action-data/badge.svg)](https://github.com/Lapikud/viide/tree/python-coverage-comment-action-data)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Lapikud/viide/tests.yml?branch=main&label=tests)](https://github.com/Lapikud/viide/actions/workflows/tests.yml?query=branch%3Amain)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Lapikud/viide/python-coverage-comment-action-data/endpoint.json)](https://htmlpreview.github.io/?https://github.com/Lapikud/viide/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 Viide is a Flask app for creating short links and QR codes. It stores links in PostgreSQL, QR images in Garage, and authenticates users through FreeIPA.
 
@@ -100,10 +100,22 @@ uv run --no-dev gunicorn --bind 0.0.0.0:8000 --workers 4 "viide.web.app:create_a
 | `src/viide/app/` | Link, QR code, and authentication logic |
 | `src/viide/db/` | Database models and repositories |
 | `src/viide/storage/` | Garage S3 client |
+| `tests/` | Pytest suite, using in-memory fakes |
 | `migrations/` | Alembic database migrations |
 | `compose.yaml` | Local PostgreSQL and Garage services |
 | `pyproject.toml`, `uv.lock` | Python package definitions and lockfile |
+| `SPEC.md` | What the app does and the rules it must keep |
 
 ## Development
 
-Run the configured linter with `uv run ruff check .`. The optional Garage web UI can be started with `docker compose --profile dev up -d garage-webui` and is available at <http://localhost:3909>.
+Run the tests and linters before opening a pull request:
+
+```sh
+uv run pytest
+uv run ruff check .
+uv run --with pylint pylint src/viide
+```
+
+The tests need no database, storage, or FreeIPA server. GitHub Actions runs the same checks on every pull request and reports coverage.
+
+The optional Garage web UI can be started with `docker compose --profile dev up -d garage-webui` and is available at <http://localhost:3909>.
