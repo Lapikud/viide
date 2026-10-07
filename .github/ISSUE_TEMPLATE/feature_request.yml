@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest an improvement to Viide.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Tell us what you want Viide to do. Do not post passwords, tokens, or private links."
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like?
+      description: "Include the problem it solves if you can."
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: More context (optional)
+      description: "Examples, sketches, or alternatives."
+  - type: input
+    id: discord
+    attributes:
+      label: Discord (optional)
+      description: "Your account on the Lap server, if different from your GitHub name."
