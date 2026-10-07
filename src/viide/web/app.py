@@ -1,3 +1,8 @@
+"""The Flask application factory, which connects the database, storage, and FreeIPA.
+
+Used by the ``viide`` command and gunicorn.
+"""
+
 from flask import Flask
 
 from viide.app.aka.manager import LinkManager
@@ -14,6 +19,7 @@ from .routes import routes
 
 
 def create_app() -> Flask:
+    """Configure and return the Flask application."""
     settings = load_settings()
 
     app = Flask(__name__)

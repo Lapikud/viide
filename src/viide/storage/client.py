@@ -1,3 +1,5 @@
+"""S3-compatible object storage for QR images."""
+
 from datetime import timedelta
 from typing import TYPE_CHECKING, BinaryIO
 
@@ -16,6 +18,8 @@ STORAGE_ERRORS = (BotoCoreError, ClientError, S3UploadFailedError)
 
 
 class S3Storage(Storage):
+    """Store QR images in S3 and create signed URLs."""
+
     def __init__(
         self,
         endpoint: AnyUrl,
@@ -24,11 +28,13 @@ class S3Storage(Storage):
         secret_key: SecretStr,
         bucket: str,
     ) -> None:
+        """Set up S3 clients for storage and URL signing."""
         self.client = self.__create_client(endpoint, access_key, secret_key)
         self.signer = self.__create_client(public_endpoint, access_key, secret_key)
         self.bucket = bucket
 
     def put(self, key: str, stream: BinaryIO, content_type: str) -> None:
+        """Upload a stream with its content type."""
         try:
             self.client.upload_fileobj(
                 stream, self.bucket, key, ExtraArgs={"ContentType": content_type}
@@ -37,6 +43,7 @@ class S3Storage(Storage):
             raise StorageUnavailable from e
 
     def get(self, key: str, expires_in: timedelta) -> HttpUrl:
+        """Get a signed URL that expires after the requested time."""
         try:
             url = self.signer.generate_presigned_url(
                 "get_object",
@@ -48,6 +55,7 @@ class S3Storage(Storage):
         return HttpUrl(url)
 
     def delete(self, key: str) -> None:
+        """Delete a stored object."""
         try:
             self.client.delete_object(Bucket=self.bucket, Key=key)
         except STORAGE_ERRORS as e:
@@ -56,6 +64,7 @@ class S3Storage(Storage):
     def __create_client(
         self, endpoint: AnyUrl, access_key: SecretStr, secret_key: SecretStr
     ) -> "S3Client":
+        """Create an S3 client for the given endpoint."""
         return boto3.client(
             "s3",
             endpoint_url=str(endpoint),

@@ -1,3 +1,5 @@
+"""Authentication client that binds to a FreeIPA LDAP directory."""
+
 import logging
 import ssl
 
@@ -21,21 +23,28 @@ logger = logging.getLogger(__name__)
 
 
 class Account(BaseModel):
+    """Build a FreeIPA account name for LDAP."""
+
     model_config = ConfigDict(frozen=True)
 
     username: str
     base_dn: str
 
     def __str__(self) -> str:
+        """Build the escaped LDAP name for the account."""
         return f"uid={escape_rdn(self.username)},cn=users,cn=accounts,{self.base_dn}"
 
 
 class LdapClient(Client):
+    """Check login credentials through LDAP."""
+
     def __init__(self, url: LdapUrl, base_dn: str) -> None:
+        """Set the LDAP server and account base."""
         self.server = self.__create_server(url)
         self.base_dn = base_dn
 
     def verify_credentials(self, creds: Credentials) -> bool:
+        """Check credentials by binding to LDAP."""
         try:
             with self.__create_connection(creds) as connection:
                 connection.open()
@@ -51,6 +60,7 @@ class LdapClient(Client):
         return True
 
     def __create_connection(self, creds: Credentials) -> Connection:
+        """Build an LDAP connection for the account."""
         return Connection(
             self.server,
             user=str(self.__create_account(creds.username)),
@@ -61,9 +71,11 @@ class LdapClient(Client):
         )
 
     def __create_account(self, username: str) -> Account:
+        """Build the LDAP account identifier for a username."""
         return Account(username=username, base_dn=self.base_dn)
 
     def __create_server(self, url: LdapUrl) -> Server:
+        """Set up an LDAP server with TLS verification."""
         secure = url.scheme == "ldaps"
         port = url.port or (636 if secure else 389)
 

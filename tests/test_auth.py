@@ -10,20 +10,20 @@ from .fakes import FakeAuthClient
 def test_login_returns_user(auth_client: FakeAuthClient):
     user = AuthManager(auth_client).login("alice", SecretStr("secret"))
 
-    assert user.id == "alice"
+    assert user.id == "alice", "login should return the authenticated user"
 
 
 def test_login_strips_username(auth_client: FakeAuthClient):
     user = AuthManager(auth_client).login("  alice  ", SecretStr("secret"))
 
-    assert user.id == "alice"
+    assert user.id == "alice", "login should trim spaces around the username"
 
 
 @pytest.mark.parametrize(("username", "password"), [("", "secret"), ("  ", "secret"), ("a", "")])
 def test_login_without_credentials_fails(auth_client: FakeAuthClient, username, password):
     with pytest.raises(MissingCredentials):
         AuthManager(auth_client).login(username, SecretStr(password))
-    assert auth_client.calls == 0
+    assert auth_client.calls == 0, "the auth client should not run for blank credentials"
 
 
 def test_login_rejects_credentials_when_client_rejects_them(auth_client: FakeAuthClient):
@@ -31,7 +31,7 @@ def test_login_rejects_credentials_when_client_rejects_them(auth_client: FakeAut
 
     with pytest.raises(InvalidCredentials):
         AuthManager(auth_client).login("alice", SecretStr("wrong"))
-    assert auth_client.calls == 1
+    assert auth_client.calls == 1, "the auth client should be called once"
 
 
 def test_login_fails_when_service_is_down(auth_client: FakeAuthClient):

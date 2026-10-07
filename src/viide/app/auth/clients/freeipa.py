@@ -1,3 +1,5 @@
+"""Authentication client for FreeIPA's web login."""
+
 import logging
 
 import httpx
@@ -11,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class FreeIpaClient(Client):
+    """Check login credentials through FreeIPA."""
+
     def __init__(self, url: HttpUrl) -> None:
+        """Set up the FreeIPA HTTP client."""
         origin = str(url).rstrip("/")
         self.http = httpx.Client(
             base_url=origin,
@@ -20,6 +25,7 @@ class FreeIpaClient(Client):
         )
 
     def verify_credentials(self, creds: Credentials) -> bool:
+        """Check credentials with FreeIPA."""
         try:
             response = self.http.post(
                 "/ipa/session/login_password",

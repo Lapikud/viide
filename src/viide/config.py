@@ -1,12 +1,21 @@
+"""Viide's settings, read from environment variables or a ``.env`` file.
+
+The database password, storage keys, and secret key are required.
+"""
+
 from pydantic import AnyUrl, HttpUrl, PostgresDsn, SecretStr, UrlConstraints, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LdapUrl(AnyUrl):
+    """Accept LDAP and LDAPS URLs with a host."""
+
     _constraints = UrlConstraints(allowed_schemes=["ldap", "ldaps"], host_required=True)
 
 
 class Settings(BaseSettings):
+    """Hold configuration read from the environment."""
+
     db_host: str = "localhost"
     db_port: int = 5432
     db_name: str = "postgres"
@@ -35,6 +44,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def database_url(self) -> PostgresDsn:
+        """Build the PostgreSQL connection URL from the settings."""
         return PostgresDsn.build(
             scheme="postgresql+psycopg",
             username=self.db_user,
@@ -46,4 +56,5 @@ class Settings(BaseSettings):
 
 
 def load_settings() -> Settings:
+    """Load application settings from the environment."""
     return Settings()  # pyright: ignore[reportCallIssue]

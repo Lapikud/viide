@@ -1,3 +1,5 @@
+"""The pages and the public short link redirect."""
+
 from flask import (
     Blueprint,
     abort,
@@ -23,11 +25,13 @@ routes = Blueprint("routes", __name__)
 @routes.get("/")
 @login_required
 def index() -> str:
+    """Render the home page for a signed-in user."""
     return render_template("index.html")
 
 
 @routes.route("/login", methods=["GET", "POST"])
 def login() -> Response | str:
+    """Display the login form or sign in valid credentials."""
     if current_user.is_authenticated:
         return redirect(url_for("routes.index"))
 
@@ -49,6 +53,7 @@ def login() -> Response | str:
 @routes.post("/logout")
 @login_required
 def logout() -> Response:
+    """End the current session and redirect to login."""
     logout_user()
     return redirect(url_for("routes.login"))
 
@@ -56,6 +61,7 @@ def logout() -> Response:
 @routes.route("/links", methods=["GET", "POST"])
 @login_required
 def handle_links() -> Response | str:
+    """List the user's links or create a new link."""
     links = current_app.extensions["links"]
     if request.method == "GET":
         return render_template("links.html", links=links.owned_by(current_user.id))
@@ -77,6 +83,7 @@ def handle_links() -> Response | str:
 @routes.post("/links/<dst>/qr")
 @login_required
 def create_qr(dst: str) -> Response:
+    """Request a QR code for a link and show any error."""
     try:
         current_app.extensions["links"].create_qr(dst, current_user.id)
     except LinkError as e:
@@ -87,6 +94,7 @@ def create_qr(dst: str) -> Response:
 @routes.post("/links/<dst>/delete")
 @login_required
 def delete_link(dst: str) -> Response:
+    """Delete a user's link and show any error."""
     try:
         current_app.extensions["links"].delete(dst, current_user.id)
     except LinkError as e:
@@ -96,6 +104,7 @@ def delete_link(dst: str) -> Response:
 
 @routes.get("/<dst>")
 def follow(dst: str) -> Response:
+    """Redirect a short code to its target or return 404."""
     try:
         link = current_app.extensions["links"].resolve(dst)
     except LinkNotFound:
