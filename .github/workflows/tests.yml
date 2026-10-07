@@ -1,0 +1,24 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv publishes no floating major tag after v7, so pin the full release.
+      - uses: astral-sh/setup-uv@v10.2.0
+      # uv reads the Python version from .python-version.
+      - run: uv sync --frozen
+      - run: uv run --frozen pytest
