@@ -48,6 +48,11 @@ py-version = "3.12"
 # Matches ruff.toml. Ruff owns formatting; pylint only checks.
 max-line-length = 100
 
+[tool.pylint.typecheck]
+# SQLAlchemy false positives: sessionmaker.begin exists in 2.x, and func.<name> is generated at runtime.
+ignored-classes = ["sqlalchemy.orm.session.sessionmaker"]
+ignored-modules = ["sqlalchemy.sql.functions"]
+
 [tool.pylint."messages control"]
 disable = [
     # Protocol ports, single-method adapters, and SQLAlchemy models are small classes by design.
