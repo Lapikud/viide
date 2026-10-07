@@ -41,6 +41,10 @@ dev = [
     "zxing-cpp>=3.1.1",
 ]
 
+[tool.coverage.run]
+# Required by python-coverage-comment-action in CI.
+relative_files = true
+
 [tool.pylint.main]
 py-version = "3.12"
 

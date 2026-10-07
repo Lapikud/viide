@@ -5,18 +5,54 @@ on:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  pytest:
+  test:
+    name: Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
-      - run: uv sync --frozen
-      - run: uv run --frozen pytest
+      - name: Check out
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run tests
+        run: uv run --frozen pytest --cov=viide --junitxml=reports/junit.xml
+
+      - name: Report test results
+        if: ${{ !cancelled() }}
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: reports/junit.xml
+          annotate_only: true
+          detailed_summary: true
+
+      - name: Report coverage
+        id: coverage
+        if: ${{ !cancelled() }}
+        uses: py-cov-action/python-coverage-comment-action@v4.5
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 90
+          MINIMUM_ORANGE: 75
+
+      - name: Store the coverage comment for fork pull requests
+        if: ${{ !cancelled() && steps.coverage.outputs.COMMENT_FILE_WRITTEN == 'true' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-coverage-comment-action
+          path: python-coverage-comment-action.txt
