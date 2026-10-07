@@ -1,6 +1,7 @@
 # Viide
 
 [![Tests](https://github.com/Lapikud/viide/actions/workflows/tests.yml/badge.svg)](https://github.com/Lapikud/viide/actions/workflows/tests.yml)
+[![Coverage](https://raw.githubusercontent.com/Lapikud/viide/python-coverage-comment-action-data/badge.svg)](https://github.com/Lapikud/viide/tree/python-coverage-comment-action-data)
 
 Viide is a Flask app for creating short links and QR codes. It stores links in PostgreSQL, QR images in Garage, and authenticates users through FreeIPA.
 
