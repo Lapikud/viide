@@ -35,6 +35,7 @@ class NewLink(BaseModel):
     dst: ShortCode
     created_by: str
     expires_at: AwareDatetime | None = None
+    static: bool = False
 
 
 class Link(NewLink):

@@ -25,6 +25,10 @@ class ShortCodeTaken(LinkError):
     message = "That short code is already taken."
 
 
+class ShortCodeGenerationFailed(LinkError):
+    message = "Could not generate a short code. Please try again."
+
+
 class ReservedShortCode(LinkError):
     message = "That short code is reserved."
 
