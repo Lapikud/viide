@@ -17,10 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # setup-uv publishes no floating major tag after v7, so pin the full release.
       - uses: astral-sh/setup-uv@v10.2.0
-      # uv reads the Python version from .python-version.
       - run: uv sync --frozen
-      # Pylint is not a project dependency; --with adds it for this run only.
-      # The version is pinned so a new pylint release cannot change results on its own.
       - run: uv run --frozen --with pylint==4.1.2 pylint src/viide
