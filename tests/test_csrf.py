@@ -4,9 +4,7 @@ from .helpers import csrf_token
 
 
 def test_app_rejects_form_without_csrf_token(client: FlaskClient):
-    response = client.post(
-        "/login", data={"username": "alice", "password": "secret"}
-    )
+    response = client.post("/login", data={"username": "alice", "password": "secret"})
 
     assert response.status_code == 400
 

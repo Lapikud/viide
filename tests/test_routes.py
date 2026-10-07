@@ -69,9 +69,7 @@ def test_logout_ends_session(user_client: FlaskClient):
 
 
 def test_creates_link(user_client: FlaskClient, links: FakeLinkRepository):
-    post_with_csrf(
-        user_client, "/links", {"src": "https://example.com", "dst": "code"}
-    )
+    post_with_csrf(user_client, "/links", {"src": "https://example.com", "dst": "code"})
 
     assert links.rows["code"].created_by == "alice"
 
@@ -85,9 +83,7 @@ def test_new_link_is_shown(user_client: FlaskClient):
 
 
 def test_invalid_link_shows_error(user_client: FlaskClient):
-    response = post_with_csrf(
-        user_client, "/links", {"src": "nope"}, follow_redirects=True
-    )
+    response = post_with_csrf(user_client, "/links", {"src": "nope"}, follow_redirects=True)
 
     assert "Enter a valid http(s) URL." in response.text
 
@@ -122,9 +118,7 @@ def test_deletes_link(user_client: FlaskClient, links: FakeLinkRepository):
 def test_deleting_other_users_link_shows_error(user_client: FlaskClient, links: FakeLinkRepository):
     links.seed("code", created_by="bob")
 
-    response = post_with_csrf(
-        user_client, "/links/code/delete", follow_redirects=True
-    )
+    response = post_with_csrf(user_client, "/links/code/delete", follow_redirects=True)
 
     assert "Link not found." in response.text
 

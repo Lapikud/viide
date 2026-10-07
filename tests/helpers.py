@@ -7,9 +7,7 @@ PUBLIC_URL = "https://viide.test"
 
 
 def login(client: FlaskClient, username: str = "alice", password: str = "secret") -> TestResponse:
-    return post_with_csrf(
-        client, "/login", {"username": username, "password": password}
-    )
+    return post_with_csrf(client, "/login", {"username": username, "password": password})
 
 
 def csrf_token(response: TestResponse) -> str:
