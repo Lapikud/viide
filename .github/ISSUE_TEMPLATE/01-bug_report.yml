@@ -2,7 +2,6 @@ name: Bug report
 description: Report something in Viide that is not working.
 title: "[Bug]: "
 labels: ["bug"]
-type: bug
 body:
   - type: markdown
     attributes:
