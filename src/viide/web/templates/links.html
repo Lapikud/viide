@@ -25,10 +25,8 @@
           · {{ "Expired" if item.expired else "Expires" }} {{ item.link.expires_at.strftime("%Y-%m-%d %H:%M") }} UTC
         {% endif %}
       </p>
-      {% if static_qr_dst == item.link.dst %}
-        <img src="{{ static_qr }}" alt="Static QR code for {{ item.link.src }}" width="160" height="160">
-      {% elif item.qr_url %}
-        <a href="{{ item.qr_url }}"><img src="{{ item.qr_url }}" alt="QR code for {{ item.short_url }}" width="160" height="160"></a>
+      {% if qr_dst == item.link.dst %}
+        <img src="{{ qr_image }}" alt="QR code for {{ item.short_url or item.link.src }}" width="160" height="160">
       {% else %}
         <form method="post" action="{{ url_for('routes.create_qr', dst=item.link.dst) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

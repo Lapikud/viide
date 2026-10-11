@@ -164,14 +164,6 @@ def test_listed_link_has_short_url(manager: LinkManager, links: FakeLinkReposito
     )
 
 
-def test_static_link_has_no_short_url(manager: LinkManager):
-    manager.shorten(URL, created_by="alice", static=True)
-
-    (item,) = manager.owned_by("alice")
-
-    assert item.short_url is None, "a static link should not have a short URL"
-
-
 def test_listed_link_shows_expired(manager: LinkManager, links: FakeLinkRepository):
     links.seed("code", expires_at=YESTERDAY)
 

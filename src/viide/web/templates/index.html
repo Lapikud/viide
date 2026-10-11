@@ -3,10 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>QR codes and links</title>
 </head>
 <body>
-  <p>Signed in as {{ current_user.id }}.</p>
+  {% if current_user.is_authenticated %}
+    <p>Signed in as {{ current_user.id }}.</p>
+  {% else %}
+    <p><a href="{{ url_for('routes.login') }}">Log in for dynamic links</a></p>
+  {% endif %}
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
       {% if category == "link" %}
@@ -16,19 +20,25 @@
       {% endif %}
     {% endfor %}
   {% endwith %}
-  <form method="post" action="{{ url_for('routes.handle_links') }}">
+  {% if current_user.is_authenticated %}
+    <form method="post" action="{{ url_for('routes.handle_links') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="src">URL for dynamic link</label>
+      <input id="src" name="src" type="url" required>
+      <label for="dst">Short code (optional)</label>
+      <input id="dst" name="dst" pattern="[A-Za-z0-9_-]+">
+      <label for="expires_in_days">Expires in days (optional)</label>
+      <input id="expires_in_days" name="expires_in_days" type="number" min="1" max="3650">
+      <button type="submit">Create dynamic link</button>
+    </form>
+    <p><a href="{{ url_for('routes.handle_links') }}">Your links</a></p>
+    <form method="post" action="{{ url_for('routes.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit">Log out</button>
+    </form>
+  {% endif %}
+  <form method="post" action="{{ url_for('routes.create_static_qr') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="src">URL</label>
-    <input id="src" name="src" type="url" required>
-    <label for="dst">Short code (optional)</label>
-    <input id="dst" name="dst" pattern="[A-Za-z0-9_-]+">
-    <label for="expires_in_days">Expires in days (optional)</label>
-    <input id="expires_in_days" name="expires_in_days" type="number" min="1" max="3650">
-    <button type="submit">Shorten</button>
-  </form>
-  <form method="post" action="{{ url_for('routes.handle_links') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="static" value="on">
     <label for="static-src">URL for static QR code</label>
     <input id="static-src" name="src" type="url" required>
     <button type="submit">Generate static QR code</button>
@@ -36,10 +46,5 @@
   {% if static_qr %}
     <p><img src="{{ static_qr }}" alt="Static QR code"></p>
   {% endif %}
-  <p><a href="{{ url_for('routes.handle_links') }}">Your links</a></p>
-  <form method="post" action="{{ url_for('routes.logout') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit">Log out</button>
-  </form>
 </body>
 </html>

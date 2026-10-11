@@ -34,7 +34,6 @@ class ShortenRequest(BaseModel):
     src: Url
     dst: Annotated[ShortCode | None, BeforeValidator(blank_to_none)] = None
     expires_in_days: Annotated[Days | None, BeforeValidator(blank_to_none)] = None
-    static: bool = False
 
 
 class NewLink(BaseModel):
@@ -46,7 +45,6 @@ class NewLink(BaseModel):
     dst: ShortCode
     created_by: str
     expires_at: AwareDatetime | None = None
-    static: bool = False
 
 
 class Link(NewLink):
@@ -62,8 +60,7 @@ class LinkDetails(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     link: Link
-    short_url: HttpUrl | None
-    qr_url: HttpUrl | None
+    short_url: HttpUrl
     expired: bool
 
 
