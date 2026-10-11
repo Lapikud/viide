@@ -8,8 +8,8 @@
 | src/viide/app/\_\_init\_\_.py              |        0 |        0 |    100% |           |
 | src/viide/app/aka/\_\_init\_\_.py          |        0 |        0 |    100% |           |
 | src/viide/app/aka/errors.py                |       22 |        0 |    100% |           |
-| src/viide/app/aka/links.py                 |       24 |        0 |    100% |           |
-| src/viide/app/aka/manager.py               |      110 |        0 |    100% |           |
+| src/viide/app/aka/links.py                 |       22 |        0 |    100% |           |
+| src/viide/app/aka/manager.py               |      101 |       24 |     76% |105, 113, 124-137, 164-168, 172-175 |
 | src/viide/app/aka/qr.py                    |       10 |        0 |    100% |           |
 | src/viide/app/auth/\_\_init\_\_.py         |        0 |        0 |    100% |           |
 | src/viide/app/auth/client.py               |        4 |        0 |    100% |           |
@@ -20,7 +20,7 @@
 | src/viide/app/auth/manager.py              |       17 |        0 |    100% |           |
 | src/viide/app/auth/user.py                 |        6 |        0 |    100% |           |
 | src/viide/app/db.py                        |        4 |        0 |    100% |           |
-| src/viide/app/storage.py                   |       11 |        0 |    100% |           |
+| src/viide/app/storage.py                   |       11 |        1 |     91% |        16 |
 | src/viide/config.py                        |       23 |        1 |     96% |        60 |
 | src/viide/db/\_\_init\_\_.py               |        0 |        0 |    100% |           |
 | src/viide/db/base.py                       |        4 |        0 |    100% |           |
@@ -37,8 +37,8 @@
 | src/viide/web/\_\_init\_\_.py              |        0 |        0 |    100% |           |
 | src/viide/web/app.py                       |       26 |        0 |    100% |           |
 | src/viide/web/extensions.py                |       15 |        0 |    100% |           |
-| src/viide/web/routes.py                    |       64 |        0 |    100% |           |
-| **TOTAL**                                  |  **541** |   **95** | **82%** |           |
+| src/viide/web/routes.py                    |       74 |        6 |     92% |88-90, 101-102, 110 |
+| **TOTAL**                                  |  **540** |  **126** | **77%** |           |
 
 
 ## Setup coverage badge
