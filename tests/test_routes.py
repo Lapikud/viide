@@ -12,7 +12,6 @@ from .helpers import login, post_with_csrf
 @pytest.mark.parametrize(
     ("method", "path"),
     [
-        ("GET", "/"),
         ("GET", "/links"),
         ("POST", "/links"),
         ("POST", "/links/code/qr"),
@@ -26,6 +25,14 @@ def test_protected_pages_redirect_to_login(client: FlaskClient, method: str, pat
     assert response.headers["Location"].startswith("/login"), (
         "anonymous users should be sent to login"
     )
+
+
+def test_index_shows_static_generator_without_login(client: FlaskClient):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Generate static QR code" in response.text
+    assert "Create dynamic link" not in response.text
 
 
 def test_login_redirects_to_index(client: FlaskClient):
@@ -69,23 +76,31 @@ def test_logged_in_user_skips_login_page(user_client: FlaskClient):
 def test_logout_ends_session(user_client: FlaskClient):
     post_with_csrf(user_client, "/logout")
 
-    response = user_client.get("/")
+    response = user_client.get("/links")
 
     assert response.status_code == 302, "a logged-out user should be redirected to login"
 
 
-def test_creates_link(user_client: FlaskClient, links: FakeLinkRepository):
-    post_with_csrf(user_client, "/links", {"src": "https://example.com", "dst": "code"})
+def test_index_does_not_offer_custom_short_codes(user_client: FlaskClient):
+    response = user_client.get("/")
 
-    assert links.rows["code"].created_by == "alice", "the new link should belong to Alice"
+    assert 'name="dst"' not in response.text
+
+
+def test_creates_link(user_client: FlaskClient, links: FakeLinkRepository):
+    post_with_csrf(user_client, "/links", {"src": "https://example.com"})
+
+    (link,) = links.rows.values()
+    assert link.created_by == "alice", "the new link should belong to Alice"
+    assert len(link.dst) == 6, "generated short codes should be six characters"
 
 
 def test_new_link_is_shown(user_client: FlaskClient):
-    data = {"src": "https://example.com", "dst": "code"}
+    data = {"src": "https://example.com"}
 
     response = post_with_csrf(user_client, "/links", data, follow_redirects=True)
 
-    assert "https://viide.test/code" in response.text, "the new short URL should be shown"
+    assert "https://viide.test/" in response.text, "the generated short URL should be shown"
 
 
 def test_invalid_link_shows_error(user_client: FlaskClient):
@@ -106,13 +121,15 @@ def test_links_page_shows_only_own_links(user_client: FlaskClient, links: FakeLi
     assert "/theirs" not in response.text, "the page should hide another user's link"
 
 
-def test_links_page_shows_no_short_url_for_static_link(user_client: FlaskClient):
-    post_with_csrf(user_client, "/links", {"src": "https://example.com/page", "static": "on"})
+def test_anonymous_static_qr_returns_inline_image_without_link_or_storage(
+    client: FlaskClient, links: FakeLinkRepository, storage: FakeStorage
+):
+    response = post_with_csrf(client, "/static-qr", {"src": "https://example.com/page"})
 
-    response = user_client.get("/links")
-
-    assert "https://example.com/page" in response.text, "the static target URL should be shown"
-    assert "https://viide.test/" not in response.text, "static links should not show a short URL"
+    assert response.status_code == 200
+    assert 'src="data:image/png;base64,' in response.text
+    assert links.rows == {}, "static QR generation should not create a link"
+    assert storage.objects == {}, "static QR images should not be stored"
 
 
 def test_deletes_link(user_client: FlaskClient, links: FakeLinkRepository):
@@ -131,25 +148,13 @@ def test_deleting_other_users_link_shows_error(user_client: FlaskClient, links: 
     assert "Link not found." in response.text, "deleting another user's link should show an error"
 
 
-def test_creates_qr(user_client: FlaskClient, links: FakeLinkRepository, storage: FakeStorage):
+def test_creates_qr_in_memory(user_client: FlaskClient, links: FakeLinkRepository, storage: FakeStorage):
     links.seed("code")
 
-    post_with_csrf(user_client, "/links/code/qr")
+    response = post_with_csrf(user_client, "/links/code/qr")
 
-    assert len(storage.objects) == 1, "the QR route should store one image"
-
-
-def test_qr_storage_failure_shows_error(
-    user_client: FlaskClient, links: FakeLinkRepository, storage: FakeStorage
-):
-    links.seed("code")
-    storage.fail_put = True
-
-    response = post_with_csrf(user_client, "/links/code/qr", follow_redirects=True)
-
-    assert "QR codes are unavailable right now." in response.text, (
-        "a QR storage failure should show an error"
-    )
+    assert 'src="data:image/png;base64,' in response.text
+    assert storage.objects == {}, "the QR route should not store its image"
 
 
 def test_short_link_redirects(client: FlaskClient, links: FakeLinkRepository):

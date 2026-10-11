@@ -2,16 +2,12 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from pydantic import HttpUrl
 
 from viide.app.aka.errors import (
     InvalidExpiry,
-    InvalidShortCode,
     InvalidUrl,
     LinkNotFound,
-    ReservedShortCode,
     ShortCodeGenerationFailed,
-    ShortCodeTaken,
 )
 from viide.app.aka.manager import LinkManager
 
@@ -33,33 +29,22 @@ def test_rejects_invalid_url(manager: LinkManager, src: str):
         manager.shorten(src, created_by="alice")
 
 
-@pytest.mark.parametrize("dst", ["has space", "bang!", "a/b", "x" * 256])
-def test_rejects_invalid_short_code(manager: LinkManager, dst: str):
-    with pytest.raises(InvalidShortCode):
-        manager.shorten(URL, created_by="alice", dst=dst)
-
-
 @pytest.mark.parametrize("days", ["0", "-1", "3651", "abc"])
 def test_rejects_invalid_expiry(manager: LinkManager, days: str):
     with pytest.raises(InvalidExpiry):
         manager.shorten(URL, created_by="alice", expires_in_days=days)
 
 
-def test_saves_link_with_custom_code(manager: LinkManager, links: FakeLinkRepository):
-    manager.shorten(URL, created_by="alice", dst="my-code")
-
-    assert links.rows["my-code"].created_by == "alice", "the custom link should belong to Alice"
-    assert links.rows["my-code"].src == HttpUrl(URL), "the custom link should keep its target URL"
-
-
-def test_link_without_expiry_never_expires(manager: LinkManager):
-    link = manager.shorten(URL, created_by="alice", dst="code")
+def test_link_without_expiry_never_expires(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
+    generate_codes(monkeypatch, "random")
+    link = manager.shorten(URL, created_by="alice")
 
     assert link.expires_at is None, "a link without an expiry should have no deadline"
 
 
-def test_expiry_is_days_from_now(manager: LinkManager):
-    link = manager.shorten(URL, created_by="alice", dst="code", expires_in_days="7")
+def test_expiry_is_days_from_now(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
+    generate_codes(monkeypatch, "random")
+    link = manager.shorten(URL, created_by="alice", expires_in_days="7")
 
     assert link.expires_at is not None, "the link should have an expiry time"
     expected = datetime.now(UTC) + timedelta(days=7)
@@ -68,25 +53,18 @@ def test_expiry_is_days_from_now(manager: LinkManager):
     )
 
 
-def test_blank_code_and_expiry_are_ignored(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
+def test_blank_expiry_is_ignored(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
     generate_codes(monkeypatch, "random")
 
-    link = manager.shorten(URL, created_by="alice", dst=" ", expires_in_days="")
+    link = manager.shorten(URL, created_by="alice", expires_in_days="")
 
-    assert link.dst == "random", "a blank code should trigger code generation"
     assert link.expires_at is None, "a blank expiry should leave the link without a deadline"
 
 
-def test_rejects_reserved_code(manager: LinkManager):
-    with pytest.raises(ReservedShortCode):
-        manager.shorten(URL, created_by="alice", dst="login")
+def test_generated_short_code_has_six_characters(manager: LinkManager):
+    link = manager.shorten(URL, created_by="alice")
 
-
-def test_rejects_taken_code(manager: LinkManager, links: FakeLinkRepository):
-    links.seed("taken")
-
-    with pytest.raises(ShortCodeTaken):
-        manager.shorten(URL, created_by="bob", dst="taken")
+    assert len(link.dst) == 6
 
 
 def test_generated_code_skips_reserved(manager: LinkManager, monkeypatch: pytest.MonkeyPatch):
@@ -162,14 +140,6 @@ def test_listed_link_has_short_url(manager: LinkManager, links: FakeLinkReposito
     assert str(item.short_url) == "https://viide.test/code", (
         "the listing should show the public short URL"
     )
-
-
-def test_static_link_has_no_short_url(manager: LinkManager):
-    manager.shorten(URL, created_by="alice", static=True)
-
-    (item,) = manager.owned_by("alice")
-
-    assert item.short_url is None, "a static link should not have a short URL"
 
 
 def test_listed_link_shows_expired(manager: LinkManager, links: FakeLinkRepository):

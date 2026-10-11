@@ -23,9 +23,8 @@ routes = Blueprint("routes", __name__)
 
 
 @routes.get("/")
-@login_required
 def index() -> str:
-    """Render the home page for a signed-in user."""
+    """Render the QR and link creation page."""
     return render_template("index.html")
 
 
@@ -70,7 +69,6 @@ def handle_links() -> Response | str:
         link = links.shorten(
             request.form.get("src", ""),
             created_by=current_user.id,
-            dst=request.form.get("dst"),
             expires_in_days=request.form.get("expires_in_days"),
         )
     except LinkError as e:
@@ -80,14 +78,35 @@ def handle_links() -> Response | str:
     return redirect(url_for("routes.index"))
 
 
-@routes.post("/links/<dst>/qr")
-@login_required
-def create_qr(dst: str) -> Response:
-    """Request a QR code for a link and show any error."""
+@routes.post("/static-qr")
+def create_static_qr() -> str:
+    """Generate a static QR directly from the submitted URL."""
     try:
-        current_app.extensions["links"].create_qr(dst, current_user.id)
+        image = current_app.extensions["links"].create_qr(
+            request.form.get("src", ""), static=True
+        )
     except LinkError as e:
         flash(str(e), "error")
+        return render_template("index.html")
+    return render_template("index.html", static_qr=image)
+
+
+@routes.post("/links/<dst>/qr")
+@login_required
+def create_qr(dst: str) -> Response | str:
+    """Request a QR code for a link and show any error."""
+    image = None
+    try:
+        image = current_app.extensions["links"].create_qr(dst, current_user.id)
+    except LinkError as e:
+        flash(str(e), "error")
+    if image is not None:
+        return render_template(
+            "links.html",
+            links=current_app.extensions["links"].owned_by(current_user.id),
+            qr_image=image,
+            qr_dst=dst,
+        )
     return redirect(url_for("routes.handle_links"))
 
 

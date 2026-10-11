@@ -1,5 +1,6 @@
 """Short link and QR code manager."""
 
+import base64
 import io
 import logging
 import secrets
@@ -13,12 +14,11 @@ from viide.app.storage import Storage, StorageUnavailable
 from .errors import (
     InvalidExpiry,
     InvalidLink,
-    InvalidShortCode,
     InvalidUrl,
     LinkError,
     LinkNotFound,
     QrUnavailable,
-    ReservedShortCode,
+    ShortCodeGenerationFailed,
     ShortCodeTaken,
 )
 from .links import Link, LinkDetails, LinkRepository, NewLink, ShortenRequest
@@ -27,10 +27,8 @@ from .qr import NewQrCode, QrRepository
 logger = logging.getLogger(__name__)
 
 ATTEMPTS = 5
-QR_URL_LIFETIME = timedelta(hours=1)
 FIELD_ERRORS: dict[str, type[LinkError]] = {
     "src": InvalidUrl,
-    "dst": InvalidShortCode,
     "expires_in_days": InvalidExpiry,
 }
 
@@ -57,37 +55,32 @@ class LinkManager:
         self,
         src: str,
         created_by: str,
-        dst: str | None = None,
         expires_in_days: str | int | None = None,
     ) -> Link:
-        """Validate and create a link with a custom or generated short code."""
-        request = self.__validate(src, dst, expires_in_days)
+        """Validate and create a link with a generated short code."""
+        request = self.__validate(src, expires_in_days)
         expires_at = (
             datetime.now(UTC) + timedelta(days=request.expires_in_days)
             if request.expires_in_days
             else None
         )
 
-        if request.dst:
-            if request.dst in self.reserved:
-                raise ReservedShortCode
-            return self.links.add(
-                NewLink(
-                    src=request.src, dst=request.dst, created_by=created_by, expires_at=expires_at
-                )
-            )
-
         for _ in range(ATTEMPTS):
-            code = secrets.token_urlsafe(5)
+            code = secrets.token_urlsafe(4)
             if code in self.reserved:
                 continue
             try:
                 return self.links.add(
-                    NewLink(src=request.src, dst=code, created_by=created_by, expires_at=expires_at)
+                    NewLink(
+                        src=request.src,
+                        dst=code,
+                        created_by=created_by,
+                        expires_at=expires_at,
+                    )
                 )
             except ShortCodeTaken:
                 continue
-        raise ShortCodeTaken
+        raise ShortCodeGenerationFailed
 
     def resolve(self, dst: str) -> Link:
         """Find an active link or raise LinkNotFound."""
@@ -111,11 +104,22 @@ class LinkManager:
         if link.connected_to is not None:
             self.__delete_qr(link.connected_to)
 
-    def create_qr(self, dst: str, created_by: str) -> None:
-        """Create and store a QR code for a user's link."""
-        link = self.__owned(dst, created_by)
-        if link.connected_to is not None:
-            return
+    def create_qr(self, dst: str, created_by: str | None = None, static: bool = False) -> str:
+        """Create a QR image for a short link or direct URL."""
+        if static:
+            url = self.__validate(dst, None).src
+        else:
+            if created_by is None:
+                raise LinkNotFound
+            link = self.__owned(dst, created_by)
+            url = self.short_url(link.dst)
+        image = base64.b64encode(self.__render(url).getvalue()).decode("ascii")
+        return f"data:image/png;base64,{image}"
+
+    # pylint: disable-next=unused-private-member
+    def __store_qr(self, link: Link, created_by: str) -> None:
+        """Persist a QR image"""
+        # Intentionally unused: QR images are cheap to generate and can stay in memory
 
         key = f"qr/{link.dst}-{secrets.token_hex(4)}.png"
         try:
@@ -132,14 +136,10 @@ class LinkManager:
         if not connected:
             self.__delete_qr(qr.id)
 
-    def __validate(
-        self, src: str, dst: str | None, expires_in_days: str | int | None
-    ) -> ShortenRequest:
+    def __validate(self, src: str, expires_in_days: str | int | None) -> ShortenRequest:
         """Validate link input and translate field errors."""
         try:
-            return ShortenRequest.model_validate(
-                {"src": src, "dst": dst, "expires_in_days": expires_in_days}
-            )
+            return ShortenRequest.model_validate({"src": src, "expires_in_days": expires_in_days})
         except ValidationError as e:
             field = str(e.errors()[0]["loc"][0])
             raise FIELD_ERRORS.get(field, InvalidLink)() from e
@@ -156,22 +156,8 @@ class LinkManager:
         return LinkDetails(
             link=link,
             short_url=self.short_url(link.dst),
-            qr_url=self.__qr_url(link),
             expired=self.__is_expired(link),
         )
-
-    def __qr_url(self, link: Link) -> HttpUrl | None:
-        """Get a signed URL for the QR image, if available."""
-        if link.connected_to is None:
-            return None
-        qr = self.qr_codes.get(link.connected_to)
-        if qr is None:
-            return None
-        try:
-            return self.storage.get(qr.storage_key, QR_URL_LIFETIME)
-        except StorageUnavailable:
-            logger.exception("Could not sign QR code %s", qr.storage_key)
-            return None
 
     def __delete_qr(self, qr_id: int) -> None:
         """Delete a QR record and discard its stored image."""

@@ -32,7 +32,6 @@ class ShortenRequest(BaseModel):
     """Validate input for a new short link."""
 
     src: Url
-    dst: Annotated[ShortCode | None, BeforeValidator(blank_to_none)] = None
     expires_in_days: Annotated[Days | None, BeforeValidator(blank_to_none)] = None
 
 
@@ -45,7 +44,6 @@ class NewLink(BaseModel):
     dst: ShortCode
     created_by: str
     expires_at: AwareDatetime | None = None
-    static: bool = False
 
 
 class Link(NewLink):
@@ -62,7 +60,6 @@ class LinkDetails(BaseModel):
 
     link: Link
     short_url: HttpUrl
-    qr_url: HttpUrl | None
     expired: bool
 
 
