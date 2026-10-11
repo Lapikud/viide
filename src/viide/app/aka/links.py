@@ -32,7 +32,6 @@ class ShortenRequest(BaseModel):
     """Validate input for a new short link."""
 
     src: Url
-    dst: Annotated[ShortCode | None, BeforeValidator(blank_to_none)] = None
     expires_in_days: Annotated[Days | None, BeforeValidator(blank_to_none)] = None
 
 

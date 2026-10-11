@@ -14,12 +14,10 @@ from viide.app.storage import Storage, StorageUnavailable
 from .errors import (
     InvalidExpiry,
     InvalidLink,
-    InvalidShortCode,
     InvalidUrl,
     LinkError,
     LinkNotFound,
     QrUnavailable,
-    ReservedShortCode,
     ShortCodeGenerationFailed,
     ShortCodeTaken,
 )
@@ -31,7 +29,6 @@ logger = logging.getLogger(__name__)
 ATTEMPTS = 5
 FIELD_ERRORS: dict[str, type[LinkError]] = {
     "src": InvalidUrl,
-    "dst": InvalidShortCode,
     "expires_in_days": InvalidExpiry,
 }
 
@@ -58,31 +55,18 @@ class LinkManager:
         self,
         src: str,
         created_by: str,
-        dst: str | None = None,
         expires_in_days: str | int | None = None,
     ) -> Link:
-        """Validate and create a link with a custom or generated short code."""
-        request = self.__validate(src, dst, expires_in_days)
+        """Validate and create a link with a generated short code."""
+        request = self.__validate(src, expires_in_days)
         expires_at = (
             datetime.now(UTC) + timedelta(days=request.expires_in_days)
             if request.expires_in_days
             else None
         )
 
-        if request.dst:
-            if request.dst in self.reserved:
-                raise ReservedShortCode
-            return self.links.add(
-                NewLink(
-                    src=request.src,
-                    dst=request.dst,
-                    created_by=created_by,
-                    expires_at=expires_at,
-                )
-            )
-
         for _ in range(ATTEMPTS):
-            code = secrets.token_urlsafe(5)
+            code = secrets.token_urlsafe(4)
             if code in self.reserved:
                 continue
             try:
@@ -123,7 +107,7 @@ class LinkManager:
     def create_qr(self, dst: str, created_by: str | None = None, static: bool = False) -> str:
         """Create a QR image for a short link or direct URL."""
         if static:
-            url = self.__validate(dst, None, None).src
+            url = self.__validate(dst, None).src
         else:
             if created_by is None:
                 raise LinkNotFound
@@ -151,13 +135,11 @@ class LinkManager:
         if not connected:
             self.__delete_qr(qr.id)
 
-    def __validate(
-        self, src: str, dst: str | None, expires_in_days: str | int | None
-    ) -> ShortenRequest:
+    def __validate(self, src: str, expires_in_days: str | int | None) -> ShortenRequest:
         """Validate link input and translate field errors."""
         try:
             return ShortenRequest.model_validate(
-                {"src": src, "dst": dst, "expires_in_days": expires_in_days}
+                {"src": src, "expires_in_days": expires_in_days}
             )
         except ValidationError as e:
             field = str(e.errors()[0]["loc"][0])

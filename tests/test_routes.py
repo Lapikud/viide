@@ -81,18 +81,26 @@ def test_logout_ends_session(user_client: FlaskClient):
     assert response.status_code == 302, "a logged-out user should be redirected to login"
 
 
-def test_creates_link(user_client: FlaskClient, links: FakeLinkRepository):
-    post_with_csrf(user_client, "/links", {"src": "https://example.com", "dst": "code"})
+def test_index_does_not_offer_custom_short_codes(user_client: FlaskClient):
+    response = user_client.get("/")
 
-    assert links.rows["code"].created_by == "alice", "the new link should belong to Alice"
+    assert 'name="dst"' not in response.text
+
+
+def test_creates_link(user_client: FlaskClient, links: FakeLinkRepository):
+    post_with_csrf(user_client, "/links", {"src": "https://example.com"})
+
+    (link,) = links.rows.values()
+    assert link.created_by == "alice", "the new link should belong to Alice"
+    assert len(link.dst) == 6, "generated short codes should be six characters"
 
 
 def test_new_link_is_shown(user_client: FlaskClient):
-    data = {"src": "https://example.com", "dst": "code"}
+    data = {"src": "https://example.com"}
 
     response = post_with_csrf(user_client, "/links", data, follow_redirects=True)
 
-    assert "https://viide.test/code" in response.text, "the new short URL should be shown"
+    assert "https://viide.test/" in response.text, "the generated short URL should be shown"
 
 
 def test_invalid_link_shows_error(user_client: FlaskClient):

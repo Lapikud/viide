@@ -25,8 +25,6 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label for="src">URL for dynamic link</label>
       <input id="src" name="src" type="url" required>
-      <label for="dst">Short code (optional)</label>
-      <input id="dst" name="dst" pattern="[A-Za-z0-9_-]+">
       <label for="expires_in_days">Expires in days (optional)</label>
       <input id="expires_in_days" name="expires_in_days" type="number" min="1" max="3650">
       <button type="submit">Create dynamic link</button>

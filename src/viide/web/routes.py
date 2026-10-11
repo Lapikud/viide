@@ -69,7 +69,6 @@ def handle_links() -> Response | str:
         link = links.shorten(
             request.form.get("src", ""),
             created_by=current_user.id,
-            dst=request.form.get("dst"),
             expires_in_days=request.form.get("expires_in_days"),
         )
     except LinkError as e:
