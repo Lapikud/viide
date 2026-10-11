@@ -116,6 +116,7 @@ class LinkManager:
         image = base64.b64encode(self.__render(url).getvalue()).decode("ascii")
         return f"data:image/png;base64,{image}"
 
+    # pylint: disable-next=unused-private-member
     def __store_qr(self, link: Link, created_by: str) -> None:
         """Persist a QR image"""
         # Intentionally unused: QR images are cheap to generate and can stay in memory
@@ -138,9 +139,7 @@ class LinkManager:
     def __validate(self, src: str, expires_in_days: str | int | None) -> ShortenRequest:
         """Validate link input and translate field errors."""
         try:
-            return ShortenRequest.model_validate(
-                {"src": src, "expires_in_days": expires_in_days}
-            )
+            return ShortenRequest.model_validate({"src": src, "expires_in_days": expires_in_days})
         except ValidationError as e:
             field = str(e.errors()[0]["loc"][0])
             raise FIELD_ERRORS.get(field, InvalidLink)() from e
