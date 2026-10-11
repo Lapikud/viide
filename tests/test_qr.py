@@ -1,3 +1,4 @@
+import base64
 import io
 
 import pytest
@@ -35,15 +36,17 @@ def test_dynamic_qr_encodes_short_url(manager: LinkManager, storage: FakeStorage
     )
 
 
-def test_static_qr_encodes_original_url(manager: LinkManager, storage: FakeStorage):
+def test_static_qr_returns_image_without_storing_it(
+    manager: LinkManager, storage: FakeStorage
+):
     link = manager.shorten("https://example.com/page", created_by="alice", static=True)
 
-    manager.create_qr(link.dst, created_by="alice")
+    image = manager.create_qr(link.dst, created_by="alice")
 
-    (image,) = storage.objects.values()
-    assert decode_qr(image) == "https://example.com/page", (
-        "a static QR code should contain the target URL"
-    )
+    assert image is not None
+    payload = base64.b64decode(image.removeprefix("data:image/png;base64,"))
+    assert decode_qr(payload) == "https://example.com/page"
+    assert storage.objects == {}, "a static QR image should not be stored"
 
 
 def test_connects_qr_to_link(

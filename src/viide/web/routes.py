@@ -72,22 +72,34 @@ def handle_links() -> Response | str:
             created_by=current_user.id,
             dst=request.form.get("dst"),
             expires_in_days=request.form.get("expires_in_days"),
+            static=request.form.get("static") == "on",
         )
     except LinkError as e:
         flash(str(e), "error")
     else:
+        if link.static:
+            image = links.create_qr(link.dst, current_user.id)
+            return render_template("index.html", static_qr=image)
         flash(str(links.short_url(link.dst)), "link")
     return redirect(url_for("routes.index"))
 
 
 @routes.post("/links/<dst>/qr")
 @login_required
-def create_qr(dst: str) -> Response:
+def create_qr(dst: str) -> Response | str:
     """Request a QR code for a link and show any error."""
+    image = None
     try:
-        current_app.extensions["links"].create_qr(dst, current_user.id)
+        image = current_app.extensions["links"].create_qr(dst, current_user.id)
     except LinkError as e:
         flash(str(e), "error")
+    if image is not None:
+        return render_template(
+            "links.html",
+            links=current_app.extensions["links"].owned_by(current_user.id),
+            static_qr=image,
+            static_qr_dst=dst,
+        )
     return redirect(url_for("routes.handle_links"))
 
 

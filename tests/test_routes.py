@@ -106,13 +106,15 @@ def test_links_page_shows_only_own_links(user_client: FlaskClient, links: FakeLi
     assert "/theirs" not in response.text, "the page should hide another user's link"
 
 
-def test_links_page_shows_no_short_url_for_static_link(user_client: FlaskClient):
-    post_with_csrf(user_client, "/links", {"src": "https://example.com/page", "static": "on"})
+def test_static_link_returns_inline_qr_without_short_url(
+    user_client: FlaskClient, storage: FakeStorage
+):
+    response = post_with_csrf(
+        user_client, "/links", {"src": "https://example.com/page", "static": "on"}
+    )
 
-    response = user_client.get("/links")
-
-    assert "https://example.com/page" in response.text, "the static target URL should be shown"
-    assert "https://viide.test/" not in response.text, "static links should not show a short URL"
+    assert 'src="data:image/png;base64,' in response.text
+    assert storage.objects == {}, "static QR images should not be stored"
 
 
 def test_deletes_link(user_client: FlaskClient, links: FakeLinkRepository):
